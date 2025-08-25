@@ -1,5 +1,4 @@
 import { PostAutocompleteResponse } from "@/app/types/googlePlaces"
-import { json } from "stream/consumers"
 
 export async function POST(
     request: Request
@@ -20,6 +19,7 @@ const postGooglePlaceAutocomplete = async (searchText: string): Promise<PostAuto
     const placeAutocompleteUrl = new URL("https://places.googleapis.com/v1/places:autocomplete")
 
     const response = await fetch(placeAutocompleteUrl, {
+        method: "POST",
         headers: {
             "Content-Type": "application/json",
             "X-Goog-Api-Key": process.env.GOOGLE_API_KEY || ""

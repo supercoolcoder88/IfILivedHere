@@ -29,3 +29,19 @@ export interface PostAutocompleteResponse {
         };
     }[];
 }
+
+export interface PostNearbySearchResponse {
+    places: {
+        location: {
+            latitude: number;
+            longitude: number;
+        };
+        rating?: number;
+        adrFormatAddress: string;
+        displayName: {
+            text: string;
+            languageCode: string;
+        };
+        primaryType: string;
+    }[];
+}
