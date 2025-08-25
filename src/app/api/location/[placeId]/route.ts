@@ -1,4 +1,4 @@
-import { GetPlaceDetailsResponse } from "@/app/types/location"
+import { GetPlaceDetailsResponse } from "@/app/types/googlePlaces"
 
 export async function GET(
     { params }: { params: { placeId: string } }
