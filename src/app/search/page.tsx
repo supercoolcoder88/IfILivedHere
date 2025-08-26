@@ -1,8 +1,9 @@
 'use client'
-import { useState } from "react"
+import { useCallback, useMemo, useState } from "react"
 import { GetPlaceDetailsResponse, PostAutocompleteResponse } from "../types/googlePlaces"
 import { CommandEmpty, CommandInput } from "cmdk";
 import { Command, CommandItem, CommandList } from "@/components/ui/command";
+import { GoogleMap, Marker, useJsApiLoader } from "@react-google-maps/api";
 
 interface PlaceSuggestions {
     placeId: string;
@@ -16,6 +17,7 @@ export default function SearchPage() {
     const [placeSuggestions, setPlaceSuggestions] = useState<PlaceSuggestions[]>([])
     const [suggestionSelected, setSuggestionSelected] = useState(false)
 
+    const [searchedPlace, setSearchedPlace] = useState<GetPlaceDetailsResponse>()
     const autocompleteTextSearch = async (input: string) => {
         // Fetch suggestions for searchText
         if (input.length < 15) {
@@ -50,7 +52,7 @@ export default function SearchPage() {
             const response = await fetch("/api/location/" + placeId)
             const data = (await response.json()) as GetPlaceDetailsResponse
 
-            console.log(data)
+            setSearchedPlace(data)
         } catch (error) {
             console.error("Failed to get place details", error)
         }
@@ -61,6 +63,39 @@ export default function SearchPage() {
         setSelectedPlaceId(placeId)
         setSuggestionSelected(true)
     }
+
+    // Google Map component loading
+    const { isLoaded } = useJsApiLoader({
+        id: 'google-map-script',
+        googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_API_KEY || ""
+    })
+
+    const containerStyle = {
+        width: "100%",
+        height: "400px",
+    };
+
+    const [map, setMap] = useState<google.maps.Map | null>(null);
+    const center = { lat: -37.931024099999995, lng: 145.1611591 };
+    // Called when map is ready
+    const onLoad = useCallback((mapInstance: google.maps.Map) => {
+        setMap(mapInstance);
+
+        // Example: Fit map to a single marker
+        const bounds = new window.google.maps.LatLngBounds(center);
+        mapInstance.fitBounds(bounds);
+    }, []);
+
+    // Cleanup when map unmounts
+    const onUnmount = useCallback(() => {
+        setMap(null);
+    }, []);
+
+    const memoContainerStyle = useMemo(() => containerStyle, []);
+
+    // Don’t render until script is loaded
+    if (!isLoaded) return <div>Loading map...</div>;
+
 
     return (
         <div>
@@ -83,6 +118,28 @@ export default function SearchPage() {
             </Command>
 
             <button onClick={() => getPlaceDetails(selectedPlaceId)}>Search</button>
+
+            <GoogleMap
+                mapContainerStyle={memoContainerStyle}
+                center={center}
+                zoom={11}
+                onLoad={onLoad}
+                onUnmount={onUnmount}
+                options={{
+                    streetViewControl: false,
+                    mapTypeControl: false,
+                    fullscreenControl: false,
+                }}
+            >
+                {
+                    // Render if place is selected 
+                    searchedPlace ?
+                        <Marker position={{ lat: searchedPlace?.location.latitude || center.lat, lng: searchedPlace?.location.longitude || center.lng }} />
+                        :
+                        <></>
+                }
+
+            </GoogleMap>
         </div>
     )
 }
