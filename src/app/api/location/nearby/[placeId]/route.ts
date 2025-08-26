@@ -1,10 +1,11 @@
 import { PostNearbySearchResponse } from "@/app/types/googlePlaces"
 
 export async function GET(
-    { params }: { params: { lat: number, long: number } }
+    { params }: { params: { lat: number, long: number, category: string } }
 ) {
+    const { lat, long, category } = await params
     try {
-        const data = await postGoogleNearbySearch(params.lat, params.long)
+        const data = await postGoogleNearbySearch(lat, long, category)
         return Response.json(data)
     } catch (error) {
         console.error(error)
@@ -13,7 +14,7 @@ export async function GET(
     }
 }
 
-const postGoogleNearbySearch = async (lat: number, long: number): Promise<PostNearbySearchResponse> => {
+const postGoogleNearbySearch = async (lat: number, long: number, category: string): Promise<PostNearbySearchResponse> => {
     const placeNearbySearchUrl = new URL("https://places.googleapis.com/v1/places:searchNearby")
 
     const response = await fetch(placeNearbySearchUrl, {
@@ -24,15 +25,15 @@ const postGoogleNearbySearch = async (lat: number, long: number): Promise<PostNe
             "X-Goog-Api-Key": process.env.GOOGLE_API_KEY || ""
         },
         body: JSON.stringify({
-            "includedTypes": ["restaurant"],
-            "maxResultCount": 10,
-            "locationRestriction": {
-                "circle": {
-                    "center": {
-                        "latitude": lat,
-                        "longitude": long
+            includedTypes: [category],
+            maxResultCount: 10,
+            locationRestriction: {
+                circle: {
+                    center: {
+                        latitude: lat,
+                        longitude: long
                     },
-                    "radius": 500.0
+                    radius: 1000.0
                 }
             }
         })

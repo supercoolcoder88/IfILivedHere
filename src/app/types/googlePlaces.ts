@@ -37,7 +37,7 @@ export interface PostNearbySearchResponse {
             longitude: number;
         };
         rating?: number;
-        adrFormatAddress: string;
+        formattedAddress: string;
         displayName: {
             text: string;
             languageCode: string;

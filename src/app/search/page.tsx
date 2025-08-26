@@ -1,6 +1,6 @@
 'use client'
 import { useCallback, useMemo, useState } from "react"
-import { GetPlaceDetailsResponse, PostAutocompleteResponse } from "../types/googlePlaces"
+import { GetPlaceDetailsResponse, PostAutocompleteResponse, PostNearbySearchResponse } from "../types/googlePlaces"
 import { CommandEmpty, CommandInput } from "cmdk";
 import { Command, CommandItem, CommandList } from "@/components/ui/command";
 import { GoogleMap, Marker, useJsApiLoader } from "@react-google-maps/api";
@@ -47,7 +47,8 @@ export default function SearchPage() {
         }
     }
 
-    const getPlaceDetails = async (placeId: string) => {
+    const searchPlaceInformation = async (placeId: string) => {
+        // Fetch Place Details
         try {
             const response = await fetch("/api/location/" + placeId)
             const data = (await response.json()) as GetPlaceDetailsResponse
@@ -55,6 +56,21 @@ export default function SearchPage() {
             setSearchedPlace(data)
         } catch (error) {
             console.error("Failed to get place details", error)
+        }
+
+        // Fetch Nearby data
+        try {
+            const nearbySearchUrl = new URL("/api/location/" + placeId)
+            nearbySearchUrl.searchParams.append("lat", searchedPlace?.location.latitude.toString() || "")
+            nearbySearchUrl.searchParams.append("long", searchedPlace?.location.longitude.toString() || "")
+            nearbySearchUrl.searchParams.append("category", "restaurant")
+
+            const response = await fetch(nearbySearchUrl)
+            const data = (await response.json()) as PostNearbySearchResponse
+
+            console.log(data)
+        } catch (error) {
+            console.error("Failed to get nearby place details", error)
         }
     }
 
@@ -72,7 +88,7 @@ export default function SearchPage() {
 
     const containerStyle = {
         width: "100%",
-        height: "400px",
+        height: "600px",
     };
 
     const [map, setMap] = useState<google.maps.Map | null>(null);
@@ -117,7 +133,7 @@ export default function SearchPage() {
                 }
             </Command>
 
-            <button onClick={() => getPlaceDetails(selectedPlaceId)}>Search</button>
+            <button onClick={() => searchPlaceInformation(selectedPlaceId)}>Search</button>
 
             <GoogleMap
                 mapContainerStyle={memoContainerStyle}
@@ -138,7 +154,6 @@ export default function SearchPage() {
                         :
                         <></>
                 }
-
             </GoogleMap>
         </div>
     )
