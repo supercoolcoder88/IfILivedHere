@@ -1,11 +1,13 @@
 import { GetPlaceDetailsResponse } from "@/app/types/googlePlaces"
 
 export async function GET(
+    req: Request,
     { params }: { params: { placeId: string } }
 ) {
+    const { placeId } = await params
     try {
-        const data = await getGooglePlaceDetails(params.placeId)
-        return Response.json({ data })
+        const data = await getGooglePlaceDetails(placeId)
+        return Response.json(data)
     } catch (error) {
         console.error(error)
 

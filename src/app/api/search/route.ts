@@ -7,7 +7,7 @@ export async function POST(
 
     try {
         const data = await postGooglePlaceAutocomplete(body.searchText)
-        return Response.json({ data })
+        return Response.json(data)
     } catch (error) {
         console.error(error)
 
@@ -25,8 +25,8 @@ const postGooglePlaceAutocomplete = async (searchText: string): Promise<PostAuto
             "X-Goog-Api-Key": process.env.GOOGLE_API_KEY || ""
         },
         body: JSON.stringify({
-            "input": searchText,
-            "includedPrimaryTypes": [
+            input: searchText,
+            includedPrimaryTypes: [
                 "premise",
                 "establishment",
                 "street_address",

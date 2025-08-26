@@ -5,7 +5,7 @@ export async function GET(
 ) {
     try {
         const data = await postGoogleNearbySearch(params.lat, params.long)
-        return Response.json({ data })
+        return Response.json(data)
     } catch (error) {
         console.error(error)
 
@@ -20,7 +20,7 @@ const postGoogleNearbySearch = async (lat: number, long: number): Promise<PostNe
         method: "POST",
         headers: {
             "Content-Type": "application/json",
-            "X-Goog-FieldMask": "id,location,formattedAddress",
+            "X-Goog-FieldMask": "places.displayName,places.primaryType,places.formattedAddress,places.rating,places.location",
             "X-Goog-Api-Key": process.env.GOOGLE_API_KEY || ""
         },
         body: JSON.stringify({
