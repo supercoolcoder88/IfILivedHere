@@ -1,9 +1,14 @@
 import { PostNearbySearchResponse } from "@/app/types/googlePlaces"
 
 export async function GET(
-    { params }: { params: { lat: number, long: number, category: string } }
+    req: Request
 ) {
-    const { lat, long, category } = await params
+    const { searchParams } = new URL(req.url)
+    // TODO: Add validation here
+    const lat = parseFloat(searchParams.get("lat") || "0")
+    const long = parseFloat(searchParams.get("long") || "0")
+    const category = searchParams.get("category") || ""
+
     try {
         const data = await postGoogleNearbySearch(lat, long, category)
         return Response.json(data)
@@ -26,7 +31,7 @@ const postGoogleNearbySearch = async (lat: number, long: number, category: strin
         },
         body: JSON.stringify({
             includedTypes: [category],
-            maxResultCount: 10,
+            maxResultCount: 11, 
             locationRestriction: {
                 circle: {
                     center: {
@@ -44,6 +49,5 @@ const postGoogleNearbySearch = async (lat: number, long: number, category: strin
     }
 
     const data = await response.json()
-
     return data as PostNearbySearchResponse
 }

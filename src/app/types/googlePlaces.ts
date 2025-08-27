@@ -30,18 +30,33 @@ export interface PostAutocompleteResponse {
     }[];
 }
 
+export interface NearbyPlace {
+    location: {
+      latitude: number;
+      longitude: number;
+    };
+    rating?: number;
+    formattedAddress: string;
+    displayName: {
+      text: string;
+      languageCode: string;
+    };
+    primaryType: string;
+  }
+  
 export interface PostNearbySearchResponse {
-    places: {
-        location: {
-            latitude: number;
-            longitude: number;
-        };
-        rating?: number;
-        formattedAddress: string;
-        displayName: {
-            text: string;
-            languageCode: string;
-        };
-        primaryType: string;
-    }[];
+    places: NearbyPlace[];
 }
+
+export interface NearbyPlacesState {
+    restaurants: NearbyPlace[];
+    schools: NearbyPlace[];
+    grocery: NearbyPlace[];
+    pharmacy: NearbyPlace[];
+    generalStore: NearbyPlace[];
+    hospital: NearbyPlace[];
+    dental: NearbyPlace[];
+    gym: NearbyPlace[];
+    gas_stations: NearbyPlace[];
+    // Add any other categories you might have
+  }

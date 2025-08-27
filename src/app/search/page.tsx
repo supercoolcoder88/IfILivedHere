@@ -1,6 +1,6 @@
 'use client'
 import { useCallback, useMemo, useState } from "react"
-import { GetPlaceDetailsResponse, PostAutocompleteResponse, PostNearbySearchResponse } from "../types/googlePlaces"
+import { GetPlaceDetailsResponse, NearbyPlacesState, PostAutocompleteResponse, PostNearbySearchResponse } from "../types/googlePlaces"
 import { CommandEmpty, CommandInput } from "cmdk";
 import { Command, CommandItem, CommandList } from "@/components/ui/command";
 import { GoogleMap, Marker, useJsApiLoader } from "@react-google-maps/api";
@@ -16,8 +16,20 @@ export default function SearchPage() {
     const [selectedPlaceId, setSelectedPlaceId] = useState("")
     const [placeSuggestions, setPlaceSuggestions] = useState<PlaceSuggestions[]>([])
     const [suggestionSelected, setSuggestionSelected] = useState(false)
-
     const [searchedPlace, setSearchedPlace] = useState<GetPlaceDetailsResponse>()
+    const [nearbyPlaces, setNearbyPlaces] = useState<NearbyPlacesState>({
+        restaurants: [],
+        schools: [],
+        grocery: [],
+        pharmacy: [],
+        generalStore: [],
+        hospital: [],
+        dental: [],
+        gym: [],
+        gas_stations: []
+      })
+    // TODO: Add distance to user workplace
+
     const autocompleteTextSearch = async (input: string) => {
         // Fetch suggestions for searchText
         if (input.length < 15) {
@@ -47,6 +59,34 @@ export default function SearchPage() {
         }
     }
 
+    const categories = ["restaurant", "school", "grocery_store", "pharmacy", "home_goods_store", "hospital", "dentist", "gym", "gas_station"]
+    const categoryMapping: { [key: string]: keyof NearbyPlacesState } = {
+        restaurant: 'restaurants',
+        school: 'schools',
+        grocery_store: 'grocery',
+        pharmacy: 'pharmacy',
+        home_goods_store: 'generalStore',
+        hospital: 'hospital',
+        dentist: 'dental',
+        gym: 'gym',
+        gas_station: 'gas_stations',
+      };
+
+    const fetchNearbyPlacesPromises = (placeId: string) => {
+        return categories.map(async (category) => {
+            try { 
+                console.log(searchedPlace)
+                const nearbySearchUrl = `/api/location/nearby/${placeId}?lat=${searchedPlace?.location.latitude}&long=${searchedPlace?.location.longitude}&category=${category}`
+                const response = await fetch(nearbySearchUrl)
+                const data = (await response.json()) as PostNearbySearchResponse
+                
+                return { category, places: data.places }
+            } catch (error) {
+                console.error("Failed to get nearby place details", error)
+            }
+        })
+    }
+
     const searchPlaceInformation = async (placeId: string) => {
         // Fetch Place Details
         try {
@@ -59,21 +99,25 @@ export default function SearchPage() {
         }
 
         // Fetch Nearby data
-        try {
-            const nearbySearchUrl = new URL("/api/location/" + placeId)
-            nearbySearchUrl.searchParams.append("lat", searchedPlace?.location.latitude.toString() || "")
-            nearbySearchUrl.searchParams.append("long", searchedPlace?.location.longitude.toString() || "")
-            nearbySearchUrl.searchParams.append("category", "restaurant")
+        const results = await Promise.all(fetchNearbyPlacesPromises(placeId))
 
-            const response = await fetch(nearbySearchUrl)
-            const data = (await response.json()) as PostNearbySearchResponse
-
-            console.log(data)
-        } catch (error) {
-            console.error("Failed to get nearby place details", error)
+        if (results === undefined) {
+            console.error("Nearby search failed")
+            return 
         }
-    }
 
+        setNearbyPlaces((prev) => {
+            const newState = {...prev}
+            results.forEach( ({category, places}) => {
+                const stateKey = categoryMapping[category]
+                if (stateKey) {
+                    newState[stateKey] = places
+                }
+            })
+            return newState
+        })
+    }
+    console.log(nearbyPlaces)
     const handleAutocompleteSelection = (address: string, placeId: string) => {
         setSearchText(address)
         setSelectedPlaceId(placeId)
