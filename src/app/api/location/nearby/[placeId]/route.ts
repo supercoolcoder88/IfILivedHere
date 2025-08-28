@@ -30,7 +30,7 @@ const postGoogleNearbySearch = async (lat: number, long: number, category: strin
             "X-Goog-Api-Key": process.env.GOOGLE_API_KEY || ""
         },
         body: JSON.stringify({
-            includedTypes: [category],
+            includedPrimaryTypes: [category],
             maxResultCount: 11, 
             locationRestriction: {
                 circle: {

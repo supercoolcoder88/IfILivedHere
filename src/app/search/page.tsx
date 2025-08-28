@@ -1,9 +1,9 @@
 'use client'
-import { useCallback, useMemo, useState } from "react"
+import { useState } from "react"
 import { GetPlaceDetailsResponse, NearbyPlacesState, PostAutocompleteResponse, PostNearbySearchResponse } from "../types/googlePlaces"
 import { CommandEmpty, CommandInput } from "cmdk";
 import { Command, CommandItem, CommandList } from "@/components/ui/command";
-import { GoogleMap, Marker, useJsApiLoader } from "@react-google-maps/api";
+import GoogleMap from "../../components/GoogleMap/GoogleMap";
 
 interface PlaceSuggestions {
     placeId: string;
@@ -70,7 +70,7 @@ export default function SearchPage() {
         dentist: 'dental',
         gym: 'gym',
         gas_station: 'gas_stations',
-      };
+    }
 
     const fetchNearbyPlacesPromises = (placeId: string) => {
         return categories.map(async (category) => {
@@ -124,39 +124,6 @@ export default function SearchPage() {
         setSuggestionSelected(true)
     }
 
-    // Google Map component loading
-    const { isLoaded } = useJsApiLoader({
-        id: 'google-map-script',
-        googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_API_KEY || ""
-    })
-
-    const containerStyle = {
-        width: "100%",
-        height: "600px",
-    };
-
-    const [map, setMap] = useState<google.maps.Map | null>(null);
-    const center = { lat: -37.931024099999995, lng: 145.1611591 };
-    // Called when map is ready
-    const onLoad = useCallback((mapInstance: google.maps.Map) => {
-        setMap(mapInstance);
-
-        // Example: Fit map to a single marker
-        const bounds = new window.google.maps.LatLngBounds(center);
-        mapInstance.fitBounds(bounds);
-    }, []);
-
-    // Cleanup when map unmounts
-    const onUnmount = useCallback(() => {
-        setMap(null);
-    }, []);
-
-    const memoContainerStyle = useMemo(() => containerStyle, []);
-
-    // Don’t render until script is loaded
-    if (!isLoaded) return <div>Loading map...</div>;
-
-
     return (
         <div>
             <h1>Search page</h1>
@@ -179,26 +146,7 @@ export default function SearchPage() {
 
             <button onClick={() => searchPlaceInformation(selectedPlaceId)}>Search</button>
 
-            <GoogleMap
-                mapContainerStyle={memoContainerStyle}
-                center={center}
-                zoom={11}
-                onLoad={onLoad}
-                onUnmount={onUnmount}
-                options={{
-                    streetViewControl: false,
-                    mapTypeControl: false,
-                    fullscreenControl: false,
-                }}
-            >
-                {
-                    // Render if place is selected 
-                    searchedPlace ?
-                        <Marker position={{ lat: searchedPlace?.location.latitude || center.lat, lng: searchedPlace?.location.longitude || center.lng }} />
-                        :
-                        <></>
-                }
-            </GoogleMap>
+            <GoogleMap searchedPlace={searchedPlace}/>
         </div>
     )
 }
