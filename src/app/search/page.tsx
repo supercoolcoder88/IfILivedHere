@@ -27,7 +27,7 @@ export default function SearchPage() {
         dental: [],
         gym: [],
         gas_stations: []
-      })
+    })
     // TODO: Add distance to user workplace
 
     const autocompleteTextSearch = async (input: string) => {
@@ -72,14 +72,14 @@ export default function SearchPage() {
         gas_station: 'gas_stations',
     }
 
-    const fetchNearbyPlacesPromises = (placeId: string) => {
+    const fetchNearbyPlacesPromises = (placeId: string, location: { latitude: number, longitude: number }) => {
         return categories.map(async (category) => {
-            try { 
+            try {
                 console.log(searchedPlace)
-                const nearbySearchUrl = `/api/location/nearby/${placeId}?lat=${searchedPlace?.location.latitude}&long=${searchedPlace?.location.longitude}&category=${category}`
+                const nearbySearchUrl = `/api/location/nearby/${placeId}?lat=${location.latitude}&long=${location.longitude}&category=${category}`
                 const response = await fetch(nearbySearchUrl)
                 const data = (await response.json()) as PostNearbySearchResponse
-                
+
                 return { category, places: data.places }
             } catch (error) {
                 console.error("Failed to get nearby place details", error)
@@ -94,29 +94,27 @@ export default function SearchPage() {
             const data = (await response.json()) as GetPlaceDetailsResponse
 
             setSearchedPlace(data)
+
+            // Fetch Nearby data
+            const results = await Promise.all(fetchNearbyPlacesPromises(placeId, data.location))
+
+            setNearbyPlaces((prev) => {
+                const newState = { ...prev }
+                results.forEach(result => {
+                    if (!result) return;
+                    const { category, places } = result;
+                    const stateKey = categoryMapping[category];
+                    if (stateKey) {
+                        newState[stateKey] = places;
+                    }
+                })
+                return newState
+            })
         } catch (error) {
             console.error("Failed to get place details", error)
         }
-
-        // Fetch Nearby data
-        const results = await Promise.all(fetchNearbyPlacesPromises(placeId))
-
-        if (results === undefined) {
-            console.error("Nearby search failed")
-            return 
-        }
-
-        setNearbyPlaces((prev) => {
-            const newState = {...prev}
-            results.forEach( ({category, places}) => {
-                const stateKey = categoryMapping[category]
-                if (stateKey) {
-                    newState[stateKey] = places
-                }
-            })
-            return newState
-        })
     }
+
     console.log(nearbyPlaces)
     const handleAutocompleteSelection = (address: string, placeId: string) => {
         setSearchText(address)
@@ -146,7 +144,7 @@ export default function SearchPage() {
 
             <button onClick={() => searchPlaceInformation(selectedPlaceId)}>Search</button>
 
-            <GoogleMap searchedPlace={searchedPlace}/>
+            <GoogleMap searchedPlace={searchedPlace} />
         </div>
     )
 }
