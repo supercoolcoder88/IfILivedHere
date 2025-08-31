@@ -32,18 +32,19 @@ export interface PostAutocompleteResponse {
 
 export interface NearbyPlace {
     location: {
-      latitude: number;
-      longitude: number;
+        latitude: number;
+        longitude: number;
     };
     rating?: number;
     formattedAddress: string;
     displayName: {
-      text: string;
-      languageCode: string;
+        text: string;
+        languageCode: string;
     };
     primaryType: string;
-  }
-  
+    businessStatus: "OPERATIONAL" | "CLOSED_TEMPORARILY" | "CLOSED_PERMANENTLY"
+}
+
 export interface PostNearbySearchResponse {
     places: NearbyPlace[];
 }
@@ -59,4 +60,4 @@ export interface NearbyPlacesState {
     gym: NearbyPlace[];
     gas_stations: NearbyPlace[];
     // Add any other categories you might have
-  }
+}

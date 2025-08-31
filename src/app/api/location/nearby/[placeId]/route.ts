@@ -26,12 +26,12 @@ const postGoogleNearbySearch = async (lat: number, long: number, category: strin
         method: "POST",
         headers: {
             "Content-Type": "application/json",
-            "X-Goog-FieldMask": "places.displayName,places.primaryType,places.formattedAddress,places.rating,places.location",
+            "X-Goog-FieldMask": "places.displayName,places.primaryType,places.formattedAddress,places.rating,places.location,places.businessStatus",
             "X-Goog-Api-Key": process.env.GOOGLE_API_KEY || ""
         },
         body: JSON.stringify({
             includedPrimaryTypes: [category],
-            maxResultCount: 11, 
+            maxResultCount: 11,
             locationRestriction: {
                 circle: {
                     center: {
