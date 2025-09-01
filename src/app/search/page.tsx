@@ -5,6 +5,8 @@ import { CommandEmpty, CommandInput } from "cmdk";
 import { Command, CommandItem, CommandList } from "@/components/ui/command";
 import GoogleMap from "../../components/GoogleMap/GoogleMap";
 import { useNearbySearch } from "@/hooks/useNearbySearch";
+import { Button } from "@/components/ui/button";
+import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 interface PlaceSuggestions {
     placeId: string;
@@ -18,7 +20,7 @@ export default function SearchPage() {
     const [placeSuggestions, setPlaceSuggestions] = useState<PlaceSuggestions[]>([])
     const [suggestionSelected, setSuggestionSelected] = useState(false)
 
-    const { searchedPlace, nearbyPlaces, searchPlaceInformation } = useNearbySearch()
+    const { searchedPlace, nearbyPlaces, searchPlaceInformation, nearbySearchApiState } = useNearbySearch()
 
     const autocompleteTextSearch = async (input: string) => {
         // Fetch suggestions for searchText
@@ -49,7 +51,7 @@ export default function SearchPage() {
         }
     }
 
-    console.log(nearbyPlaces)
+    console.log(selectedPlaceId)
     const handleAutocompleteSelection = (address: string, placeId: string) => {
         setSearchText(address)
         setSelectedPlaceId(placeId)
@@ -61,6 +63,31 @@ export default function SearchPage() {
             <h1>Search page</h1>
             <Command>
                 <CommandInput value={searchText} onValueChange={value => { setSearchText(value); autocompleteTextSearch(value) }} placeholder="Search for a place" />
+                {
+                    nearbySearchApiState != "done" ?
+                        <></>
+                        :
+                        <div>
+                            <Table>
+                                <TableBody>
+                                    {
+                                        Object.entries(nearbyPlaces).map(([key, places]) => {
+                                            return (
+                                                <TableRow key={key}>
+                                                    <TableCell>
+                                                        {key}
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        {places.length <= 10 ? places.length : "10+"}
+                                                    </TableCell>
+                                                </TableRow>
+                                            )
+                                        })
+                                    }
+                                </TableBody>
+                            </Table>
+                        </div>
+                }
                 {
                     suggestionSelected ?
                         <></>
@@ -76,7 +103,7 @@ export default function SearchPage() {
                 }
             </Command>
 
-            <button onClick={() => searchPlaceInformation(selectedPlaceId)}>Search</button>
+            <Button onClick={() => searchPlaceInformation(selectedPlaceId)}>Search</Button>
 
             <GoogleMap searchedPlace={searchedPlace} />
         </div>

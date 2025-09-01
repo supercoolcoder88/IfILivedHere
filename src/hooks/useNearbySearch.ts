@@ -1,4 +1,6 @@
 import { NearbyPlacesState, GetPlaceDetailsResponse, PostNearbySearchResponse, NearbyPlace } from "@/app/types/googlePlaces"
+import { SearchCodeIcon } from "lucide-react"
+import { Lacquer } from "next/font/google"
 import { useState } from "react"
 
 
@@ -39,8 +41,13 @@ export function useNearbySearch() {
         gym: [],
         gas_stations: []
     })
+    const [nearbySearchApiState, setNearbySearchApiState] = useState<"empty" | "loading" | "done">("empty")
 
     const searchPlaceInformation = async (placeId: string) => {
+        if (placeId.length === 0) {
+            throw new Error("Invalid Place ID")
+        }
+        console.log(placeId)
         try {
             // Fetch main place details
             const response = await fetch("/api/location/" + placeId)
@@ -77,12 +84,14 @@ export function useNearbySearch() {
                 })
                 return newState
             })
+
+            setNearbySearchApiState("done")
         } catch (error) {
             console.error("Fetching nearby places fail", error)
         }
     }
 
-    return { searchedPlace, nearbyPlaces, searchPlaceInformation }
+    return { searchedPlace, nearbyPlaces, searchPlaceInformation, nearbySearchApiState }
 }
 
 function filterNearbySearch(places: NearbyPlace[]) {
@@ -91,6 +100,8 @@ function filterNearbySearch(places: NearbyPlace[]) {
     return places.filter(place => {
         // Must be Operational
         if (place.businessStatus !== "OPERATIONAL") return false
+        // Must have an address
+        if (place.formattedAddress === undefined || place.formattedAddress.length === 0) return false
         // Must be unique address
         if (uniqueAddresses.has(place.formattedAddress)) return false
         uniqueAddresses.add(place.formattedAddress)
