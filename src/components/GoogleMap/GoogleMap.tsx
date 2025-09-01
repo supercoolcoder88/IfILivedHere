@@ -19,7 +19,7 @@ export default function GoogleMap({ searchedPlace }: GoogleMapProps) {
     };
 
     const [map, setMap] = useState<google.maps.Map | null>(null);
-    const center = { lat: -37.931024099999995, lng: 145.1611591 };
+    const defaultCenter = { lat: -37.931024099999995, lng: 145.1611591 };
     // Called when map is ready
     const onLoad = useCallback((mapInstance: google.maps.Map) => {
         setMap(mapInstance);
@@ -42,7 +42,7 @@ export default function GoogleMap({ searchedPlace }: GoogleMapProps) {
     return (
         <Map
             mapContainerStyle={memoContainerStyle}
-            center={center}
+            center={{ lat: searchedPlace?.location.latitude || defaultCenter.lat, lng: searchedPlace?.location.longitude || defaultCenter.lng }}
             zoom={11}
             onLoad={onLoad}
             onUnmount={onUnmount}
@@ -55,7 +55,7 @@ export default function GoogleMap({ searchedPlace }: GoogleMapProps) {
             {
                 // Render if place is selected 
                 searchedPlace ?
-                    <Marker position={{ lat: searchedPlace?.location.latitude || center.lat, lng: searchedPlace?.location.longitude || center.lng }} />
+                    <Marker position={{ lat: searchedPlace?.location.latitude || defaultCenter.lat, lng: searchedPlace?.location.longitude || defaultCenter.lng }} />
                     :
                     <></>
             }
