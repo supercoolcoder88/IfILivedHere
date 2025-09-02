@@ -1,9 +1,7 @@
 import { GetPlaceDetailsResponse } from "@/app/types/googlePlaces"
 import z from "zod"
 
-const RequestParams = z.object({
-    placeId: z.string().min(1)
-})
+const RequestParams = z.string().min(1)
 
 export async function GET(
     req: Request,

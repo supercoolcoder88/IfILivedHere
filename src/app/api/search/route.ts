@@ -1,33 +1,38 @@
 import { PostAutocompleteResponse } from "@/app/types/googlePlaces"
+import { geolocation } from "@vercel/functions"
 import z from "zod"
 
 const RequestParams = z.object({
-    searchText: z.string().min(3)
+    searchText: z.string().min(3),
+    // lat: z.float32(),
+    // long: z.float32()
 })
 
 export async function POST(
     request: Request
 ) {
     const body = await request.json()
-    const searchText = body.searchText
 
-    const validationResult = RequestParams.safeParse(searchText)
+    const validationResult = RequestParams.safeParse(body)
 
     if (!validationResult.success) {
         return new Response(validationResult.error.message, { status: 400 })
     }
 
+    const { latitude, longitude } = geolocation(request)
+
     try {
-        const data = await postGooglePlaceAutocomplete(searchText)
+        const data = await postGooglePlaceAutocomplete(body.searchText, parseFloat(latitude || "0"), parseFloat(longitude || "0"))
         return Response.json(data)
     } catch (error) {
         console.error(error)
 
         return new Response("Failed to autocomplete search", { status: 500 })
     }
+
 }
 
-const postGooglePlaceAutocomplete = async (searchText: string): Promise<PostAutocompleteResponse> => {
+const postGooglePlaceAutocomplete = async (searchText: string, lat: number, long: number): Promise<PostAutocompleteResponse> => {
     const placeAutocompleteUrl = new URL("https://places.googleapis.com/v1/places:autocomplete")
 
     const response = await fetch(placeAutocompleteUrl, {
@@ -43,7 +48,14 @@ const postGooglePlaceAutocomplete = async (searchText: string): Promise<PostAuto
                 "establishment",
                 "street_address",
                 "subpremise"
-            ]
+            ],
+            // regionCode: "AU",
+            // locationBias: {
+            //     circle: {
+            //         center: { latitude: lat, longitude: long },
+            //         radius: 50000.0
+            //     }
+            // }
         })
     })
 

@@ -3,6 +3,7 @@ import { useState } from "react"
 
 const categoryMapping: { [key: string]: keyof NearbyPlacesState } = {
     restaurant: "restaurants",
+    cafe: "cafes",
     school: "schools",
     grocery_store: "grocery",
     pharmacy: "pharmacy",
@@ -17,6 +18,7 @@ export function useNearbySearch() {
     const [searchedPlace, setSearchedPlace] = useState<GetPlaceDetailsResponse>()
     const [nearbyPlaces, setNearbyPlaces] = useState<NearbyPlacesState>({
         restaurants: [],
+        cafes: [],
         schools: [],
         grocery: [],
         pharmacy: [],
@@ -45,10 +47,9 @@ export function useNearbySearch() {
                     try {
                         const nearbySearchUrl =
                             `/api/location/nearby/${placeId}?lat=${data.location.latitude}&long=${data.location.longitude}&category=${category}`
-
                         const res = await fetch(nearbySearchUrl)
                         const json = (await res.json()) as PostNearbySearchResponse
-                        return { category, places: json.places }
+                        return { category, places: Array.isArray(json.places) ? json.places : [] }
                     } catch (err) {
                         console.error("Nearby fetch failed:", err)
                         return null

@@ -51,6 +51,7 @@ export interface PostNearbySearchResponse {
 
 export interface NearbyPlacesState {
     restaurants: NearbyPlace[];
+    cafes: NearbyPlace[];
     schools: NearbyPlace[];
     grocery: NearbyPlace[];
     pharmacy: NearbyPlace[];
@@ -59,11 +60,11 @@ export interface NearbyPlacesState {
     dental: NearbyPlace[];
     gym: NearbyPlace[];
     gas_stations: NearbyPlace[];
-    // Add any other categories you might have
 }
 
 export const categories = [
     "restaurant",
+    "cafe",
     "school",
     "grocery_store",
     "pharmacy",

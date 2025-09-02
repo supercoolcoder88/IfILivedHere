@@ -1,12 +1,12 @@
 'use client'
-import { useState } from "react"
-import { GetPlaceDetailsResponse, NearbyPlace, NearbyPlacesState, PostAutocompleteResponse, PostNearbySearchResponse } from "../types/googlePlaces"
+import { useEffect, useState } from "react"
+import { PostAutocompleteResponse } from "../types/googlePlaces"
 import { CommandEmpty, CommandInput } from "cmdk";
 import { Command, CommandItem, CommandList } from "@/components/ui/command";
 import GoogleMap from "../../components/GoogleMap/GoogleMap";
 import { useNearbySearch } from "@/hooks/useNearbySearch";
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 
 interface PlaceSuggestions {
     placeId: string;
@@ -15,18 +15,18 @@ interface PlaceSuggestions {
 
 export default function SearchPage() {
     // TODO: Move placeId to a zustand store
-    const [searchText, setSearchText] = useState("")
     const [selectedPlaceId, setSelectedPlaceId] = useState("")
     const [placeSuggestions, setPlaceSuggestions] = useState<PlaceSuggestions[]>([])
-    const [suggestionSelected, setSuggestionSelected] = useState(false)
+    const [searchText, setSearchText] = useState("")
 
     const { searchedPlace, nearbyPlaces, searchPlaceInformation, nearbySearchApiState } = useNearbySearch()
 
     const autocompleteTextSearch = async (input: string) => {
-        // Fetch suggestions for searchText
+        // Autocomplete usage restrictions
         if (input.length < 15) {
             return
         }
+
         try {
             const response = await fetch("/api/search", {
                 method: "POST",
@@ -39,73 +39,83 @@ export default function SearchPage() {
 
             // Check for first 2 suggestions
             const fetchedSuggestions: PlaceSuggestions[] = data.suggestions
-                .slice(0, 2)
+                .slice(0, 3)
                 .map(s => ({
                     placeId: s.placePrediction.placeId,
                     address: s.placePrediction.text.text
                 }))
-
             setPlaceSuggestions(fetchedSuggestions)
         } catch (error) {
             console.error("Failed to get suggestions", error)
         }
     }
 
-    console.log(selectedPlaceId)
     const handleAutocompleteSelection = (address: string, placeId: string) => {
         setSearchText(address)
         setSelectedPlaceId(placeId)
-        setSuggestionSelected(true)
     }
 
     return (
-        <div>
-            <h1>Search page</h1>
-            <Command>
-                <CommandInput value={searchText} onValueChange={value => { setSearchText(value); autocompleteTextSearch(value) }} placeholder="Search for a place" />
-                {
-                    nearbySearchApiState != "done" ?
-                        <></>
-                        :
-                        <div>
-                            <Table>
-                                <TableBody>
-                                    {
-                                        Object.entries(nearbyPlaces).map(([key, places]) => {
-                                            return (
-                                                <TableRow key={key}>
-                                                    <TableCell>
-                                                        {key}
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        {places.length <= 10 ? places.length : "10+"}
-                                                    </TableCell>
-                                                </TableRow>
-                                            )
-                                        })
-                                    }
-                                </TableBody>
-                            </Table>
-                        </div>
-                }
-                {
-                    suggestionSelected ?
-                        <></>
-                        :
+        <div className="flex flex-col gap-6 p-6">
+            {/* Search Row */}
+            <div className="flex w-full items-center gap-2">
+                <Command className="flex-1 rounded-xl border shadow-sm">
+                    <CommandInput
+                        value={searchText}
+                        onValueChange={(value) => {
+                            setSearchText(value)
+                            autocompleteTextSearch(value)
+                        }}
+                        placeholder="Search for a place"
+                    />
+                    {placeSuggestions && (
                         <CommandList>
                             <CommandEmpty>No results found.</CommandEmpty>
-                            {
-                                placeSuggestions.map(suggestion => (
-                                    <CommandItem key={suggestion.placeId} onSelect={() => handleAutocompleteSelection(suggestion.address, suggestion.placeId)}>{suggestion.address}</CommandItem>
-                                ))
-                            }
+                            {placeSuggestions.map((suggestion) => (
+                                <CommandItem
+                                    key={suggestion.placeId}
+                                    onSelect={() =>
+                                        handleAutocompleteSelection(suggestion.address, suggestion.placeId)
+                                    }
+                                >
+                                    {suggestion.address}
+                                </CommandItem>
+                            ))}
                         </CommandList>
-                }
-            </Command>
+                    )}
+                </Command>
+                <Button
+                    onClick={() => searchPlaceInformation(selectedPlaceId)}
+                    disabled={!selectedPlaceId}
+                >
+                    Search
+                </Button>
+            </div>
 
-            <Button onClick={() => searchPlaceInformation(selectedPlaceId)}>Search</Button>
+            {/* Nearby Results */}
+            {nearbySearchApiState === "done" && (
+                <div className="rounded-xl border shadow-sm">
+                    <Table>
+                        <TableBody>
+                            {Object.entries(nearbyPlaces).map(([key, places]) => (
+                                <TableRow key={key}>
+                                    <TableCell className="font-medium capitalize">
+                                        {key.replace(/_/g, " ")}
+                                    </TableCell>
+                                    <TableCell>
+                                        {places.length <= 10 ? places.length : "10+"}
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </div>
+            )}
 
-            <GoogleMap searchedPlace={searchedPlace} />
+            {/* Map */}
+            <div className="h-[400px] w-full rounded-xl border shadow-sm">
+                <GoogleMap searchedPlace={searchedPlace} />
+            </div>
         </div>
     )
 }

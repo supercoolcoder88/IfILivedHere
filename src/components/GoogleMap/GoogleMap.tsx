@@ -25,7 +25,7 @@ export default function GoogleMap({ searchedPlace }: GoogleMapProps) {
         setMap(mapInstance);
 
         // Example: Fit map to a single marker
-        const bounds = new window.google.maps.LatLngBounds(center);
+        const bounds = new window.google.maps.LatLngBounds(defaultCenter);
         mapInstance.fitBounds(bounds);
     }, []);
 
