@@ -1,21 +1,30 @@
-import { PostNearbySearchResponse } from "@/app/types/googlePlaces"
+import { categories, Category, PostNearbySearchResponse } from "@/app/types/googlePlaces"
 
 export async function GET(
     req: Request
 ) {
     const { searchParams } = new URL(req.url)
-    // TODO: Add validation here
-    const lat = parseFloat(searchParams.get("lat") || "0")
-    const long = parseFloat(searchParams.get("long") || "0")
+
+    const lat = searchParams.get("lat")
+    const long = searchParams.get("long")
+
+    if (!lat || !long) {
+        return new Response("Invalid input for lat or long", { status: 400 })
+    }
+
     const category = searchParams.get("category") || ""
 
+    if (!categories.includes(category as Category)) {
+        return new Response("Invalid category", { status: 400 });
+    }
+
     try {
-        const data = await postGoogleNearbySearch(lat, long, category)
+        const data = await postGoogleNearbySearch(parseFloat(lat), parseFloat(long), category)
         return Response.json(data)
     } catch (error) {
         console.error(error)
 
-        return new Response("Failed to fetch location data", { status: 500 })
+        return new Response("Failed to fetch nearby place data", { status: 500 })
     }
 }
 

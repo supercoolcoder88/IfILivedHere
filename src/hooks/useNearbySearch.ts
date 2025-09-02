@@ -1,20 +1,5 @@
-import { NearbyPlacesState, GetPlaceDetailsResponse, PostNearbySearchResponse, NearbyPlace } from "@/app/types/googlePlaces"
-import { SearchCodeIcon } from "lucide-react"
-import { Lacquer } from "next/font/google"
+import { NearbyPlacesState, GetPlaceDetailsResponse, PostNearbySearchResponse, NearbyPlace, categories } from "@/app/types/googlePlaces"
 import { useState } from "react"
-
-
-const categories = [
-    "restaurant",
-    "school",
-    "grocery_store",
-    "pharmacy",
-    "home_goods_store",
-    "hospital",
-    "dentist",
-    "gym",
-    "gas_station"
-]
 
 const categoryMapping: { [key: string]: keyof NearbyPlacesState } = {
     restaurant: "restaurants",
@@ -47,7 +32,7 @@ export function useNearbySearch() {
         if (placeId.length === 0) {
             throw new Error("Invalid Place ID")
         }
-        console.log(placeId)
+
         try {
             // Fetch main place details
             const response = await fetch("/api/location/" + placeId)

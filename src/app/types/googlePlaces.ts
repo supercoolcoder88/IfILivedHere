@@ -61,3 +61,18 @@ export interface NearbyPlacesState {
     gas_stations: NearbyPlace[];
     // Add any other categories you might have
 }
+
+export const categories = [
+    "restaurant",
+    "school",
+    "grocery_store",
+    "pharmacy",
+    "home_goods_store",
+    "hospital",
+    "dentist",
+    "gym",
+    "gas_station"
+] as const;
+
+// narrow union type from the array
+export type Category = typeof categories[number];
