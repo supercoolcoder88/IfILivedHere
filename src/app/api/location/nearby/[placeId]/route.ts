@@ -1,25 +1,33 @@
-import { categories, Category, PostNearbySearchResponse } from "@/app/types/googlePlaces"
+import { categories, PostNearbySearchResponse } from "@/app/types/googlePlaces"
+import z from "zod"
+
+const RequestParams = z.object({
+    lat: z.number(),
+    long: z.number(),
+    category: z.enum(categories)
+})
 
 export async function GET(
     req: Request
 ) {
     const { searchParams } = new URL(req.url)
 
-    const lat = searchParams.get("lat")
-    const long = searchParams.get("long")
-
-    if (!lat || !long) {
-        return new Response("Invalid input for lat or long", { status: 400 })
+    const requestParams = {
+        lat: parseFloat(searchParams.get("lat") ?? ""),
+        long: parseFloat(searchParams.get("long") ?? ""),
+        category: searchParams.get("category") ?? ""
     }
 
-    const category = searchParams.get("category") || ""
+    const result = RequestParams.safeParse(requestParams)
 
-    if (!categories.includes(category as Category)) {
-        return new Response("Invalid category", { status: 400 });
+    if (!result.success) {
+        return new Response(result.error.message, { status: 400 })
     }
+
+    const { lat, long, category } = result.data
 
     try {
-        const data = await postGoogleNearbySearch(parseFloat(lat), parseFloat(long), category)
+        const data = await postGoogleNearbySearch(lat, long, category)
         return Response.json(data)
     } catch (error) {
         console.error(error)
