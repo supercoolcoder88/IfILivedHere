@@ -1,12 +1,24 @@
 import { PostAutocompleteResponse } from "@/app/types/googlePlaces"
+import z from "zod"
+
+const RequestParams = z.object({
+    searchText: z.string().min(3)
+})
 
 export async function POST(
     request: Request
 ) {
     const body = await request.json()
+    const searchText = body.searchText
+
+    const validationResult = RequestParams.safeParse(searchText)
+
+    if (!validationResult.success) {
+        return new Response(validationResult.error.message, { status: 400 })
+    }
 
     try {
-        const data = await postGooglePlaceAutocomplete(body.searchText)
+        const data = await postGooglePlaceAutocomplete(searchText)
         return Response.json(data)
     } catch (error) {
         console.error(error)

@@ -18,16 +18,14 @@ export async function GET(
         category: searchParams.get("category") ?? ""
     }
 
-    const result = RequestParams.safeParse(requestParams)
+    const validationResult = RequestParams.safeParse(requestParams)
 
-    if (!result.success) {
-        return new Response(result.error.message, { status: 400 })
+    if (!validationResult.success) {
+        return new Response(validationResult.error.message, { status: 400 })
     }
 
-    const { lat, long, category } = result.data
-
     try {
-        const data = await postGoogleNearbySearch(lat, long, category)
+        const data = await postGoogleNearbySearch(requestParams.lat, requestParams.long, requestParams.category)
         return Response.json(data)
     } catch (error) {
         console.error(error)

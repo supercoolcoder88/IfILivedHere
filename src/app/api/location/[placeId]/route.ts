@@ -1,10 +1,22 @@
 import { GetPlaceDetailsResponse } from "@/app/types/googlePlaces"
+import z from "zod"
+
+const RequestParams = z.object({
+    placeId: z.string().min(1)
+})
 
 export async function GET(
     req: Request,
     { params }: { params: { placeId: string } }
 ) {
     const { placeId } = await params
+
+    const validationResult = RequestParams.safeParse(placeId)
+
+    if (!validationResult.success) {
+        return new Response(validationResult.error.message, { status: 400 })
+    }
+
     try {
         const data = await getGooglePlaceDetails(placeId)
         return Response.json(data)
