@@ -4,7 +4,8 @@ import z from "zod"
 const RequestParams = z.object({
     lat: z.number(),
     long: z.number(),
-    category: z.enum(categories)
+    category: z.enum(categories),
+    radius: z.number()
 })
 
 export async function GET(
@@ -15,7 +16,8 @@ export async function GET(
     const requestParams = {
         lat: parseFloat(searchParams.get("lat") ?? ""),
         long: parseFloat(searchParams.get("long") ?? ""),
-        category: searchParams.get("category") ?? ""
+        category: searchParams.get("category") ?? "",
+        radius: parseFloat(searchParams.get("radius") ?? ""),
     }
 
     const validationResult = RequestParams.safeParse(requestParams)
@@ -25,7 +27,7 @@ export async function GET(
     }
 
     try {
-        const data = await postGoogleNearbySearch(requestParams.lat, requestParams.long, requestParams.category)
+        const data = await postGoogleNearbySearch(requestParams.lat, requestParams.long, requestParams.category, requestParams.radius)
         return Response.json(data)
     } catch (error) {
         console.error(error)
@@ -34,14 +36,14 @@ export async function GET(
     }
 }
 
-const postGoogleNearbySearch = async (lat: number, long: number, category: string): Promise<PostNearbySearchResponse> => {
+const postGoogleNearbySearch = async (lat: number, long: number, category: string, radius: number): Promise<PostNearbySearchResponse> => {
     const placeNearbySearchUrl = new URL("https://places.googleapis.com/v1/places:searchNearby")
 
     const response = await fetch(placeNearbySearchUrl, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
-            "X-Goog-FieldMask": "places.displayName,places.primaryType,places.formattedAddress,places.rating,places.location,places.businessStatus",
+            "X-Goog-FieldMask": "places.displayName,places.primaryType,places.formattedAddress,places.rating,places.location,places.businessStatus,places.id",
             "X-Goog-Api-Key": process.env.GOOGLE_API_KEY || ""
         },
         body: JSON.stringify({
@@ -53,7 +55,7 @@ const postGoogleNearbySearch = async (lat: number, long: number, category: strin
                         latitude: lat,
                         longitude: long
                     },
-                    radius: 1000.0
+                    radius: radius
                 }
             }
         })

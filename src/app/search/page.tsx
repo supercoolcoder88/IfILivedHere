@@ -1,12 +1,14 @@
 'use client'
 import { useEffect, useState } from "react"
-import { PostAutocompleteResponse } from "../types/googlePlaces"
+import { NearbyPlace, PostAutocompleteResponse } from "../types/googlePlaces"
 import { CommandEmpty, CommandInput } from "cmdk";
 import { Command, CommandItem, CommandList } from "@/components/ui/command";
 import GoogleMap from "../../components/GoogleMap/GoogleMap";
 import { useNearbySearch } from "@/hooks/useNearbySearch";
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 interface PlaceSuggestions {
     placeId: string;
@@ -18,7 +20,7 @@ export default function SearchPage() {
     const [selectedPlaceId, setSelectedPlaceId] = useState("")
     const [placeSuggestions, setPlaceSuggestions] = useState<PlaceSuggestions[]>([])
     const [searchText, setSearchText] = useState("")
-
+    const [searchRadius, setSearchRadius] = useState("")
     const { searchedPlace, nearbyPlaces, searchPlaceInformation, nearbySearchApiState } = useNearbySearch()
 
     const autocompleteTextSearch = async (input: string) => {
@@ -85,30 +87,69 @@ export default function SearchPage() {
                     )}
                 </Command>
                 <Button
-                    onClick={() => searchPlaceInformation(selectedPlaceId)}
+                    onClick={() => searchPlaceInformation(selectedPlaceId, searchRadius)}
                     disabled={!selectedPlaceId}
                 >
                     Search
                 </Button>
             </div>
 
+            <Label htmlFor="radius">Radius</Label>
+            <Input
+                id="radius"
+                type="number"
+                value={searchRadius}
+                onChange={(e) => {
+                    const n = Number(e.target.value.replace(/\D/g, ""))
+                    if (Number.isNaN(n)) {
+                        setSearchRadius(0)
+                    } else {
+                        setSearchRadius(n)
+                    }
+                }}
+                onBlur={(e) => {
+                    const n = Number(e.target.value)
+                    if (!Number.isNaN(n)) {
+                        setSearchRadius(Math.min(50000, Math.max(1, n)))
+                    }
+                }}
+                onKeyDown={(e) => {
+                    if (["e", "E", "+", "-", "."].includes(e.key)) e.preventDefault()
+                }}
+                onWheel={(e) => (e.target as HTMLInputElement).blur()}
+                inputMode="numeric"
+                pattern="[0-9]*"
+                placeholder="Radius (m)"
+                min={1}
+                max={50000}
+                step={100}
+                className="w-40"
+            />
             {/* Nearby Results */}
             {nearbySearchApiState === "done" && (
-                <div className="rounded-xl border shadow-sm">
-                    <Table>
-                        <TableBody>
-                            {Object.entries(nearbyPlaces).map(([key, places]) => (
-                                <TableRow key={key}>
-                                    <TableCell className="font-medium capitalize">
-                                        {key.replace(/_/g, " ")}
-                                    </TableCell>
-                                    <TableCell>
-                                        {places.length <= 10 ? places.length : "10+"}
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
+                <div className="rounded-xl border shadow-sm p-4">
+                    <div className="grid grid-cols-2 gap-4">
+                        {Object.entries(nearbyPlaces).map(([key, places]) => (
+                            <div key={key} className="rounded-lg border p-3">
+                                <Accordion type="single" collapsible>
+                                    <AccordionItem value={key}>
+                                        <AccordionTrigger className="capitalize">
+                                            {key.replace(/_/g, " ")} ({places.length <= 10 ? places.length : "10+"})
+                                        </AccordionTrigger>
+                                        <AccordionContent>
+                                            <ul className="space-y-1">
+                                                {places.map((place: NearbyPlace) => (
+                                                    <li key={place.id} className="text-sm">
+                                                        {place.displayName.text}
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </AccordionContent>
+                                    </AccordionItem>
+                                </Accordion>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             )}
 

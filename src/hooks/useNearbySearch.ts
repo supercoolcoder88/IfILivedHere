@@ -30,7 +30,7 @@ export function useNearbySearch() {
     })
     const [nearbySearchApiState, setNearbySearchApiState] = useState<"empty" | "loading" | "done">("empty")
 
-    const searchPlaceInformation = async (placeId: string) => {
+    const searchPlaceInformation = async (placeId: string, radius: number) => {
         if (placeId.length === 0) {
             throw new Error("Invalid Place ID")
         }
@@ -46,7 +46,7 @@ export function useNearbySearch() {
                 categories.map(async category => {
                     try {
                         const nearbySearchUrl =
-                            `/api/location/nearby/${placeId}?lat=${data.location.latitude}&long=${data.location.longitude}&category=${category}`
+                            `/api/location/nearby/${placeId}?lat=${data.location.latitude}&long=${data.location.longitude}&category=${category}&radius=${radius}`
                         const res = await fetch(nearbySearchUrl)
                         const json = (await res.json()) as PostNearbySearchResponse
                         return { category, places: Array.isArray(json.places) ? json.places : [] }

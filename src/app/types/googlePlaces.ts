@@ -31,6 +31,7 @@ export interface PostAutocompleteResponse {
 }
 
 export interface NearbyPlace {
+    id: string
     location: {
         latitude: number;
         longitude: number;
