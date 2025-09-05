@@ -100,9 +100,9 @@ export default function SearchPage() {
                 type="number"
                 value={searchRadius}
                 onChange={(e) => {
-                    const n = Number(e.target.value.replace(/\D/g, ""))
-                    if (Number.isNaN(n)) {
-                        setSearchRadius(0)
+                    const n = e.target.value.replace(/\D/g, "")
+                    if (Number.isNaN(parseFloat(n))) {
+                        setSearchRadius("0")
                     } else {
                         setSearchRadius(n)
                     }
@@ -110,7 +110,7 @@ export default function SearchPage() {
                 onBlur={(e) => {
                     const n = Number(e.target.value)
                     if (!Number.isNaN(n)) {
-                        setSearchRadius(Math.min(50000, Math.max(1, n)))
+                        setSearchRadius(Math.min(50000, Math.max(1, n)).toString())
                     }
                 }}
                 onKeyDown={(e) => {

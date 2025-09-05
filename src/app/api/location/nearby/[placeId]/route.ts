@@ -5,7 +5,7 @@ const RequestParams = z.object({
     lat: z.number(),
     long: z.number(),
     category: z.enum(categories),
-    radius: z.number()
+    radius: z.string()
 })
 
 export async function GET(
@@ -17,7 +17,7 @@ export async function GET(
         lat: parseFloat(searchParams.get("lat") ?? ""),
         long: parseFloat(searchParams.get("long") ?? ""),
         category: searchParams.get("category") ?? "",
-        radius: parseFloat(searchParams.get("radius") ?? ""),
+        radius: searchParams.get("radius") ?? "",
     }
 
     const validationResult = RequestParams.safeParse(requestParams)
@@ -36,7 +36,7 @@ export async function GET(
     }
 }
 
-const postGoogleNearbySearch = async (lat: number, long: number, category: string, radius: number): Promise<PostNearbySearchResponse> => {
+const postGoogleNearbySearch = async (lat: number, long: number, category: string, radius: string): Promise<PostNearbySearchResponse> => {
     const placeNearbySearchUrl = new URL("https://places.googleapis.com/v1/places:searchNearby")
 
     const response = await fetch(placeNearbySearchUrl, {
@@ -55,7 +55,7 @@ const postGoogleNearbySearch = async (lat: number, long: number, category: strin
                         latitude: lat,
                         longitude: long
                     },
-                    radius: radius
+                    radius: parseFloat(radius)
                 }
             }
         })
