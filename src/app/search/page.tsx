@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState } from "react"
-import { NearbyPlace, PostAutocompleteResponse } from "../types/googlePlaces"
+import { NearbyPlace, NearbyPlacesState, PostAutocompleteResponse } from "../types/googlePlaces"
 import { CommandEmpty, CommandInput } from "cmdk";
 import { Command, CommandItem, CommandList } from "@/components/ui/command";
 import GoogleMap from "../../components/GoogleMap/GoogleMap";
@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Preahvihear } from "next/font/google";
 
 interface PlaceSuggestions {
     placeId: string;
@@ -21,6 +22,22 @@ export default function SearchPage() {
     const [placeSuggestions, setPlaceSuggestions] = useState<PlaceSuggestions[]>([])
     const [searchText, setSearchText] = useState("")
     const [searchRadius, setSearchRadius] = useState("")
+    const [nearbyPlaceMarkers, setNearbyPlaceMarkers] = useState<NearbyPlacesState>({
+        restaurants: [],
+        cafes: [],
+        schools: [],
+        grocery: [],
+        pharmacy: [],
+        generalStore: [],
+        hospital: [],
+        dental: [],
+        gym: [],
+        gasStation: [],
+        shoppingMall: [],
+        busStop: [],
+        trainStation: []
+    })
+
     const { searchedPlace, nearbyPlaces, searchPlaceInformation, nearbySearchApiState } = useNearbySearch()
 
     const autocompleteTextSearch = async (input: string) => {
@@ -57,6 +74,15 @@ export default function SearchPage() {
         setSelectedPlaceId(placeId)
     }
 
+    const updateNearbyPlaceMarker = (key: string, places: NearbyPlace[], isOpenCheck: string) => {
+        setNearbyPlaceMarkers(prev => (
+            {
+                ...prev,
+                [key]: key === isOpenCheck ? places : []
+            }
+        ))
+    }
+
     return (
         <div className="flex flex-col gap-6 p-6">
             {/* Search Row */}
@@ -87,7 +113,7 @@ export default function SearchPage() {
                     )}
                 </Command>
                 <Button
-                    onClick={() => searchPlaceInformation(selectedPlaceId, searchRadius)}
+                    onClick={() => searchPlaceInformation(selectedPlaceId, parseFloat(searchRadius))}
                     disabled={!selectedPlaceId}
                 >
                     Search
@@ -131,9 +157,9 @@ export default function SearchPage() {
                     <div className="grid grid-cols-2 gap-4">
                         {Object.entries(nearbyPlaces).map(([key, places]) => (
                             <div key={key} className="rounded-lg border p-3">
-                                <Accordion type="single" collapsible>
+                                <Accordion type="single" collapsible onValueChange={(val) => updateNearbyPlaceMarker(key, places, val)}>
                                     <AccordionItem value={key}>
-                                        <AccordionTrigger className="capitalize">
+                                        <AccordionTrigger name={key} className="capitalize">
                                             {key.replace(/_/g, " ")} ({places.length <= 10 ? places.length : "10+"})
                                         </AccordionTrigger>
                                         <AccordionContent>
@@ -155,7 +181,7 @@ export default function SearchPage() {
 
             {/* Map */}
             <div className="h-[400px] w-full rounded-xl border shadow-sm">
-                <GoogleMap searchedPlace={searchedPlace} />
+                <GoogleMap searchedPlace={searchedPlace} nearbyPlaces={nearbyPlaceMarkers} />
             </div>
         </div>
     )

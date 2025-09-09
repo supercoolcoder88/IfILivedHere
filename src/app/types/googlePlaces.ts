@@ -60,7 +60,10 @@ export interface NearbyPlacesState {
     hospital: NearbyPlace[];
     dental: NearbyPlace[];
     gym: NearbyPlace[];
-    gas_stations: NearbyPlace[];
+    gasStation: NearbyPlace[];
+    shoppingMall: NearbyPlace[];
+    busStop: NearbyPlace[];
+    trainStation: NearbyPlace[];
 }
 
 export const categories = [
@@ -73,7 +76,10 @@ export const categories = [
     "hospital",
     "dentist",
     "gym",
-    "gas_station"
+    "gas_station",
+    "shopping_mall",
+    "bus_stop",
+    "train_station"
 ] as const;
 
 // narrow union type from the array

@@ -1,7 +1,7 @@
 import { NearbyPlacesState, GetPlaceDetailsResponse, PostNearbySearchResponse, NearbyPlace, categories } from "@/app/types/googlePlaces"
 import { useState } from "react"
 
-const categoryMapping: { [key: string]: keyof NearbyPlacesState } = {
+export const categoryMapping: { [key: string]: keyof NearbyPlacesState } = {
     restaurant: "restaurants",
     cafe: "cafes",
     school: "schools",
@@ -11,7 +11,10 @@ const categoryMapping: { [key: string]: keyof NearbyPlacesState } = {
     hospital: "hospital",
     dentist: "dental",
     gym: "gym",
-    gas_station: "gas_stations"
+    gas_station: "gasStation",
+    shopping_mall: "shoppingMall",
+    bus_stop: "busStop",
+    train_station: "trainStation"
 }
 
 export function useNearbySearch() {
@@ -26,8 +29,12 @@ export function useNearbySearch() {
         hospital: [],
         dental: [],
         gym: [],
-        gas_stations: []
+        gasStation: [],
+        shoppingMall: [],
+        busStop: [],
+        trainStation: []
     })
+
     const [nearbySearchApiState, setNearbySearchApiState] = useState<"empty" | "loading" | "done">("empty")
 
     const searchPlaceInformation = async (placeId: string, radius: number) => {

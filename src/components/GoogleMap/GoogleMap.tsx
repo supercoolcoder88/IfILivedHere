@@ -1,12 +1,13 @@
-import { GetPlaceDetailsResponse } from "@/app/types/googlePlaces";
+import { GetPlaceDetailsResponse, NearbyPlace, NearbyPlacesState } from "@/app/types/googlePlaces";
 import { GoogleMap as Map, Marker, useJsApiLoader } from "@react-google-maps/api";
 import { useState, useCallback, useMemo } from "react";
 
 interface GoogleMapProps {
     searchedPlace: GetPlaceDetailsResponse | undefined
+    nearbyPlaces: NearbyPlacesState
 }
 
-export default function GoogleMap({ searchedPlace }: GoogleMapProps) {
+export default function GoogleMap({ searchedPlace, nearbyPlaces }: GoogleMapProps) {
     // Google Map component loading
     const { isLoaded } = useJsApiLoader({
         id: 'google-map-script',
@@ -54,11 +55,21 @@ export default function GoogleMap({ searchedPlace }: GoogleMapProps) {
         >
             {
                 // Render if place is selected 
-                searchedPlace ?
-                    <Marker position={{ lat: searchedPlace?.location.latitude || defaultCenter.lat, lng: searchedPlace?.location.longitude || defaultCenter.lng }} />
-                    :
-                    <></>
+                searchedPlace && <Marker position={{ lat: searchedPlace?.location.latitude || defaultCenter.lat, lng: searchedPlace?.location.longitude || defaultCenter.lng }} />
             }
+            {Object.values(nearbyPlaces)
+                .filter((category) => category.length > 0)
+                .flat()
+                .map((place) => (
+                    <Marker
+                        key={place.id}
+                        position={{
+                            lat: place.location.latitude,
+                            lng: place.location.longitude,
+                        }}
+                    />
+                ))}
+
         </Map>
     )
 }
