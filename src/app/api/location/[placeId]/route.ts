@@ -1,4 +1,4 @@
-import { GetPlaceDetailsResponse } from "@/app/types/googlePlaces"
+import { GetPlaceDetailsResponse } from "@/app/types/google/places"
 import z from "zod"
 
 const RequestParams = z.string().min(1)

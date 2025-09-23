@@ -1,10 +1,9 @@
-import { categories, PostNearbySearchResponse } from "@/app/types/googlePlaces"
+import { categories, NearbyPlace, PostNearbySearchResponse } from "@/app/types/google/places"
 import z from "zod"
 
 const RequestParams = z.object({
     lat: z.number(),
     long: z.number(),
-    category: z.enum(categories),
     radius: z.string()
 })
 
@@ -16,7 +15,6 @@ export async function GET(
     const requestParams = {
         lat: parseFloat(searchParams.get("lat") ?? ""),
         long: parseFloat(searchParams.get("long") ?? ""),
-        category: searchParams.get("category") ?? "",
         radius: searchParams.get("radius") ?? "",
     }
 
@@ -27,8 +25,15 @@ export async function GET(
     }
 
     try {
-        const data = await postGoogleNearbySearch(requestParams.lat, requestParams.long, requestParams.category, requestParams.radius)
-        return Response.json(data)
+        const nearbyPlaces = await Promise.all(
+            categories.map(async category => {
+                const res = await postGoogleNearbySearch(requestParams.lat, requestParams.long, category, requestParams.radius)
+                const filtered = filterNearbySearchResult(res.places)
+                return { [category]: filtered }
+            })
+        )
+
+        return Response.json(nearbyPlaces)
     } catch (error) {
         console.error(error)
 
@@ -67,4 +72,19 @@ const postGoogleNearbySearch = async (lat: number, long: number, category: strin
 
     const data = await response.json()
     return data as PostNearbySearchResponse
+}
+
+function filterNearbySearchResult(places: NearbyPlace[]) {
+    const uniqueAddresses = new Set<string>()
+
+    return places.filter(place => {
+        // Must be Operational
+        if (place.businessStatus !== "OPERATIONAL") return false
+        // Must have an address
+        if (place.formattedAddress === undefined || place.formattedAddress.length === 0) return false
+        // Must be unique address
+        if (uniqueAddresses.has(place.formattedAddress)) return false
+        uniqueAddresses.add(place.formattedAddress)
+        return true
+    })
 }

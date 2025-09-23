@@ -1,4 +1,4 @@
-import { GetPlaceDetailsResponse, NearbyPlace, NearbyPlacesState } from "@/app/types/googlePlaces";
+import { GetPlaceDetailsResponse, NearbyPlace, NearbyPlacesState } from "@/app/types/google/places";
 import { GoogleMap as Map, Marker, useJsApiLoader } from "@react-google-maps/api";
 import { useState, useCallback, useMemo } from "react";
 

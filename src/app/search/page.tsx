@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState } from "react"
-import { NearbyPlace, NearbyPlacesState, PostAutocompleteResponse } from "../types/googlePlaces"
+import { NearbyPlace, NearbyPlacesState, PostAutocompleteResponse } from "../types/google/places"
 import { CommandEmpty, CommandInput } from "cmdk";
 import { Command, CommandItem, CommandList } from "@/components/ui/command";
 import GoogleMap from "../../components/GoogleMap/GoogleMap";

@@ -1,4 +1,4 @@
-import { NearbyPlacesState, GetPlaceDetailsResponse, PostNearbySearchResponse, NearbyPlace, categories } from "@/app/types/googlePlaces"
+import { NearbyPlacesState, GetPlaceDetailsResponse, PostNearbySearchResponse, NearbyPlace, categories } from "@/app/types/google/places"
 import { useState } from "react"
 
 export const categoryMapping: { [key: string]: keyof NearbyPlacesState } = {
@@ -44,40 +44,17 @@ export function useNearbySearch() {
 
         try {
             // Fetch main place details
-            const response = await fetch("/api/location/" + placeId)
-            const data = (await response.json()) as GetPlaceDetailsResponse
-            setSearchedPlace(data)
+            const placeDetailsResponse = await fetch("/api/location/" + placeId)
+            const placeDetails = (await placeDetailsResponse.json()) as GetPlaceDetailsResponse
 
-            // Fetch nearby categories
-            const results = await Promise.all(
-                categories.map(async category => {
-                    try {
-                        const nearbySearchUrl =
-                            `/api/location/nearby/${placeId}?lat=${data.location.latitude}&long=${data.location.longitude}&category=${category}&radius=${radius}`
-                        const res = await fetch(nearbySearchUrl)
-                        const json = (await res.json()) as PostNearbySearchResponse
-                        return { category, places: Array.isArray(json.places) ? json.places : [] }
-                    } catch (err) {
-                        console.error("Nearby fetch failed:", err)
-                        return null
-                    }
-                })
-            )
+            setSearchedPlace(placeDetails)
 
-            // Update state
-            setNearbyPlaces((prev: NearbyPlacesState) => {
-                const newState = { ...prev }
-                results.forEach(result => {
-                    if (!result) return
-                    const { category, places } = result
-                    const stateKey = categoryMapping[category]
-                    if (stateKey) {
-                        newState[stateKey] = filterNearbySearch(places)
-                    }
-                })
-                return newState
-            })
-
+            // Fetch nearby places
+            const nearbySearchUrl =
+                `/api/location/nearby/${placeId}?lat=${placeDetails.location.latitude}&long=${placeDetails.location.longitude}&radius=${radius}`
+            const nearbySearchResponse = await fetch(nearbySearchUrl)
+            const nearbyPlaces = (await nearbySearchResponse.json()) as NearbyPlacesState
+            setNearbyPlaces(nearbyPlaces)
             setNearbySearchApiState("done")
         } catch (error) {
             console.error("Fetching nearby places fail", error)
@@ -85,19 +62,4 @@ export function useNearbySearch() {
     }
 
     return { searchedPlace, nearbyPlaces, searchPlaceInformation, nearbySearchApiState }
-}
-
-function filterNearbySearch(places: NearbyPlace[]) {
-    const uniqueAddresses = new Set<string>()
-
-    return places.filter(place => {
-        // Must be Operational
-        if (place.businessStatus !== "OPERATIONAL") return false
-        // Must have an address
-        if (place.formattedAddress === undefined || place.formattedAddress.length === 0) return false
-        // Must be unique address
-        if (uniqueAddresses.has(place.formattedAddress)) return false
-        uniqueAddresses.add(place.formattedAddress)
-        return true
-    })
 }

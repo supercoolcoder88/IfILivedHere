@@ -1,4 +1,4 @@
-import { PostAutocompleteResponse } from "@/app/types/googlePlaces"
+import { PostAutocompleteResponse } from "@/app/types/google/places"
 import { geolocation } from "@vercel/functions"
 import z from "zod"
 
