@@ -1,5 +1,6 @@
 import { } from "@/app/types/google/places"
-import { PostComputeRouteMatrixRequest, PostComputeRouteMatrixResponse } from "@/app/types/google/routes"
+import { PostComputeRouteMatrixRequest, PostComputeRouteMatrixResponse, RouteMatrixElement } from "@/app/types/google/routes"
+import { Key } from "lucide-react"
 import z from "zod"
 
 const WaypointSchema = z.object({
@@ -10,10 +11,10 @@ const WaypointSchema = z.object({
 
 const RequestBody = z.object({
     origins: z.array(WaypointSchema),
-    destinations: z.array(WaypointSchema),
-    travelMode: z.enum(["DRIVE", "BICYCLE", "WALK", "TRANSIT"]),
-    units: z.literal("METRIC"),
+    destinations: z.array(WaypointSchema)
 })
+
+const travelModeTypes = ["DRIVE", "BICYCLE", "WALK", "TRANSIT"]
 
 export async function POST(
     req: Request
@@ -27,8 +28,27 @@ export async function POST(
     }
 
     try {
-        const data = await postComputeRouteMatrix(body)
-        return Response.json(data)
+        // Calls the Routes API for computeRouteMatrix
+        const res = await Promise.all(
+            travelModeTypes.map(async mode => {
+                const data = await postComputeRouteMatrix({
+                    ...body,
+                    units: "METRIC",
+                    travelMode: mode
+                })
+                return [mode, data] as const
+            })
+        ).then(Object.fromEntries)
+
+        // Map responses with placeID based on index
+        for (const mode in res) {
+            res[mode] = res[mode].map((route: RouteMatrixElement) => ({
+                ...route,
+                id: body.destinations[route.destinationIndex].waypoint.placeId
+            }))
+        }
+
+        return Response.json(res)
     } catch (error) {
         console.error(error)
 

@@ -29,9 +29,9 @@ export async function GET(
             categories.map(async category => {
                 const res = await postGoogleNearbySearch(requestParams.lat, requestParams.long, category, requestParams.radius)
                 const filtered = filterNearbySearchResult(res.places)
-                return { [category]: filtered }
+                return [category, filtered] as const
             })
-        )
+        ).then(Object.fromEntries)
 
         return Response.json(nearbyPlaces)
     } catch (error) {
@@ -44,7 +44,7 @@ export async function GET(
 const postGoogleNearbySearch = async (lat: number, long: number, category: string, radius: string): Promise<PostNearbySearchResponse> => {
     const placeNearbySearchUrl = new URL("https://places.googleapis.com/v1/places:searchNearby")
 
-    const response = await fetch(placeNearbySearchUrl, {
+    const res = await fetch(placeNearbySearchUrl, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
@@ -66,15 +66,17 @@ const postGoogleNearbySearch = async (lat: number, long: number, category: strin
         })
     })
 
-    if (!response.ok) {
-        throw new Error(`Google Place Nearby search API error: ${response.statusText}`)
+    if (!res.ok) {
+        throw new Error(`Google Place Nearby search API error: ${res.statusText}`)
     }
 
-    const data = await response.json()
+    const data = await res.json()
     return data as PostNearbySearchResponse
 }
 
 function filterNearbySearchResult(places: NearbyPlace[]) {
+    if (!Array.isArray(places)) return []
+
     const uniqueAddresses = new Set<string>()
 
     return places.filter(place => {
