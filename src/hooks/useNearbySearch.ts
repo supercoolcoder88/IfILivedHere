@@ -67,6 +67,7 @@ export function useNearbySearch() {
             const keys = Object.keys(nearbyPlaces) as (keyof NearbyPlacesState)[]
             let keysIterator = 0
 
+            const temp = { ...nearbyPlaces }
             if (routesData) {
                 /*
                     routesData will return in batches, each batch is filled to ensure it is below 49 elements and the entire category is
@@ -78,33 +79,30 @@ export function useNearbySearch() {
                     routes.BICYCLE.sort((a: RouteMatrixElement, b: RouteMatrixElement) => a.destinationIndex - b.destinationIndex)
                     routes.WALK.sort((a: RouteMatrixElement, b: RouteMatrixElement) => a.destinationIndex - b.destinationIndex)
                     routes.TRANSIT.sort((a: RouteMatrixElement, b: RouteMatrixElement) => a.destinationIndex - b.destinationIndex)
-
-                    setNearbyPlaces(prev => {
-                        const temp = { ...prev }
-                        for (let i = 0; i < routes.DRIVE.length; i++) {
-                            const key = keys[keysIterator]
-                            temp[keys[keysIterator]][count] = {
-                                ...temp[key][count],
-                                routes: {
-                                    drive: routes.DRIVE[i],
-                                    bicycle: routes.BICYCLE[i],
-                                    walk: routes.WALK[i],
-                                    transit: routes.TRANSIT[i]
-                                }
-                            }
-
-                            count += 1
-
-                            if (count >= temp[key].length) {
-                                keysIterator += 1
-                                count = 0
+                    for (let i = 0; i < routes.DRIVE.length; i++) {
+                        const key = keys[keysIterator]
+                        temp[keys[keysIterator]][count] = {
+                            ...temp[key][count],
+                            routes: {
+                                drive: routes.DRIVE[i],
+                                bicycle: routes.BICYCLE[i],
+                                walk: routes.WALK[i],
+                                transit: routes.TRANSIT[i]
                             }
                         }
 
-                        return temp
-                    })
+                        count += 1
+
+                        if (count >= temp[key].length) {
+                            keysIterator += 1
+                            count = 0
+                        }
+                    }
                 })
+
+                setNearbyPlaces(temp)
             }
+            // TODO: Count nearbyplaces
         } catch (error) {
             console.error("Fetching nearby places fail", error)
         }
