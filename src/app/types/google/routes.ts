@@ -13,6 +13,7 @@ export interface Waypoint {
 }
 
 export interface RouteMatrixElement {
+    id?: string;
     originIndex: number;
     destinationIndex: number;
     distanceMeters: number;

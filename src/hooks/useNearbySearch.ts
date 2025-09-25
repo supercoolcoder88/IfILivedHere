@@ -1,5 +1,5 @@
-import { NearbyPlacesState, GetPlaceDetailsResponse, PostNearbySearchResponse, NearbyPlace, categories } from "@/app/types/google/places"
-import { PostComputeRouteMatrixRequest } from "@/app/types/google/routes"
+import { NearbyPlacesState, GetPlaceDetailsResponse, PostNearbySearchResponse, NearbyPlace, categories, RoutesData } from "@/app/types/google/places"
+import { PostComputeRouteMatrixRequest, RouteMatrixElement } from "@/app/types/google/routes"
 import { PaletteIcon } from "lucide-react"
 import { useState } from "react"
 import { json } from "zod"
@@ -61,7 +61,50 @@ export function useNearbySearch() {
             setNearbySearchApiState("done")
 
             // Get the route information after nearby place is rendered
-            getRouteInformation(placeId, nearbyPlaces)
+            const routesData = await getRouteInformation(placeId, nearbyPlaces)
+            let count = 0
+
+            const keys = Object.keys(nearbyPlaces) as (keyof NearbyPlacesState)[]
+            let keysIterator = 0
+
+            if (routesData) {
+                /*
+                    routesData will return in batches, each batch is filled to ensure it is below 49 elements and the entire category is
+                    sent per batch, meaning no batch will contain a category that is split between two. Thus, we just count the number of 
+                    routes iterated and step through the categories when full.
+                */
+                routesData.forEach((routes) => {
+                    routes.DRIVE.sort((a: RouteMatrixElement, b: RouteMatrixElement) => a.destinationIndex - b.destinationIndex)
+                    routes.BICYCLE.sort((a: RouteMatrixElement, b: RouteMatrixElement) => a.destinationIndex - b.destinationIndex)
+                    routes.WALK.sort((a: RouteMatrixElement, b: RouteMatrixElement) => a.destinationIndex - b.destinationIndex)
+                    routes.TRANSIT.sort((a: RouteMatrixElement, b: RouteMatrixElement) => a.destinationIndex - b.destinationIndex)
+
+                    setNearbyPlaces(prev => {
+                        const temp = { ...prev }
+                        for (let i = 0; i < routes.DRIVE.length; i++) {
+                            const key = keys[keysIterator]
+                            temp[keys[keysIterator]][count] = {
+                                ...temp[key][count],
+                                routes: {
+                                    drive: routes.DRIVE[i],
+                                    bicycle: routes.BICYCLE[i],
+                                    walk: routes.WALK[i],
+                                    transit: routes.TRANSIT[i]
+                                }
+                            }
+
+                            count += 1
+
+                            if (count >= temp[key].length) {
+                                keysIterator += 1
+                                count = 0
+                            }
+                        }
+
+                        return temp
+                    })
+                })
+            }
         } catch (error) {
             console.error("Fetching nearby places fail", error)
         }
@@ -84,7 +127,7 @@ export function useNearbySearch() {
             )
 
         try {
-            const res = await Promise.all(
+            const routesData = await Promise.all(
                 callQueue.map(async batch => {
                     const destinations = Object.values(batch).flat().map(place => (
                         {
@@ -115,7 +158,7 @@ export function useNearbySearch() {
                 })
             )
 
-            console.log(res)
+            return routesData
 
         } catch (error) {
             console.error("Error fetching route: ", error)

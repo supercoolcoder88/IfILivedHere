@@ -1,3 +1,5 @@
+import { RouteMatrixElement } from "./routes";
+
 export interface GetPlaceDetailsResponse {
     id: string;
     formattedAddress: string;
@@ -43,7 +45,15 @@ export interface NearbyPlace {
         languageCode: string;
     };
     primaryType: string;
-    businessStatus: "OPERATIONAL" | "CLOSED_TEMPORARILY" | "CLOSED_PERMANENTLY"
+    businessStatus: "OPERATIONAL" | "CLOSED_TEMPORARILY" | "CLOSED_PERMANENTLY";
+    routes: RoutesData
+}
+
+export interface RoutesData {
+    drive: RouteMatrixElement[];
+    bicycle: RouteMatrixElement[];
+    walk: RouteMatrixElement[];
+    transit: RouteMatrixElement[];
 }
 
 export interface PostNearbySearchResponse {
