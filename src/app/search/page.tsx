@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { NearbyPlace, NearbyPlacesState, PostAutocompleteResponse } from "../types/google/places"
 import { CommandEmpty, CommandInput } from "cmdk";
 import { Command, CommandItem, CommandList } from "@/components/ui/command";
@@ -9,12 +9,13 @@ import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Preahvihear } from "next/font/google";
 
 interface PlaceSuggestions {
     placeId: string;
     address: string
 }
+
+const ROUTE_EXISTS = "ROUTE_EXISTS"
 
 export default function SearchPage() {
     // TODO: Move placeId to a zustand store
@@ -38,11 +39,29 @@ export default function SearchPage() {
         trainStation: []
     })
 
+    // Render states
+    const [isPlaceSelected, setIsPlaceSelected] = useState(false)
+
     const { searchedPlace, nearbyPlaces, searchPlaceInformation, nearbySearchApiState } = useNearbySearch()
 
-    const autocompleteTextSearch = async (input: string) => {
-        // Autocomplete usage restrictions
-        if (input.length < 15) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const debounce = <T extends (...args: any[]) => void>(
+        func: T,
+        timeout: number
+    ) => {
+        let timer: ReturnType<typeof setTimeout>
+
+        return (...args: Parameters<T>) => {
+            clearTimeout(timer)
+            timer = setTimeout(() => {
+                func(...args)
+            }, timeout)
+        }
+
+    }
+
+    const fetchAutocomplete = async (input: string) => {
+        if (input.length < 1) {
             return
         }
 
@@ -56,9 +75,9 @@ export default function SearchPage() {
 
             const data = await response.json() as PostAutocompleteResponse
 
-            // Check for first 2 suggestions
+            // Check for first 3 suggestions
             const fetchedSuggestions: PlaceSuggestions[] = data.suggestions
-                .slice(0, 3)
+                .slice(0, 4)
                 .map(s => ({
                     placeId: s.placePrediction.placeId,
                     address: s.placePrediction.text.text
@@ -69,9 +88,15 @@ export default function SearchPage() {
         }
     }
 
+    const autocompleteTextSearch = useMemo(
+        () => debounce(fetchAutocomplete, 500),
+        []
+    )
+
     const handleAutocompleteSelection = (address: string, placeId: string) => {
         setSearchText(address)
         setSelectedPlaceId(placeId)
+        setIsPlaceSelected(true)
     }
 
     const updateNearbyPlaceMarker = (key: string, places: NearbyPlace[], isOpenCheck: string) => {
@@ -96,21 +121,24 @@ export default function SearchPage() {
                         }}
                         placeholder="Search for a place"
                     />
-                    {placeSuggestions && (
-                        <CommandList>
-                            <CommandEmpty>No results found.</CommandEmpty>
-                            {placeSuggestions.map((suggestion) => (
-                                <CommandItem
-                                    key={suggestion.placeId}
-                                    onSelect={() =>
-                                        handleAutocompleteSelection(suggestion.address, suggestion.placeId)
-                                    }
-                                >
-                                    {suggestion.address}
-                                </CommandItem>
-                            ))}
-                        </CommandList>
-                    )}
+                    {
+
+                        searchText && !isPlaceSelected && (
+                            <CommandList>
+                                <CommandEmpty>No results found.</CommandEmpty>
+                                {placeSuggestions.map((suggestion) => (
+                                    <CommandItem
+                                        key={suggestion.placeId}
+                                        onSelect={() =>
+                                            handleAutocompleteSelection(suggestion.address, suggestion.placeId)
+                                        }
+                                    >
+                                        {suggestion.address}
+                                    </CommandItem>
+                                ))}
+                            </CommandList>
+                        )
+                    }
                 </Command>
                 <Button
                     onClick={() => searchPlaceInformation(selectedPlaceId, parseFloat(searchRadius))}
@@ -167,7 +195,12 @@ export default function SearchPage() {
                                                 {places.map((place: NearbyPlace) => (
                                                     <li key={place.id} className="text-sm">
                                                         {place.displayName.text}
+                                                        {" Drive duration: " + (place.routes?.drive.condition === ROUTE_EXISTS ? place.routes?.drive.duration : "-")}
+                                                        {" Walk duration: " + (place.routes?.walk.condition === ROUTE_EXISTS ? place.routes?.walk.duration : "-")}
+                                                        {" Transit duration: " + (place.routes?.transit.condition === ROUTE_EXISTS ? place.routes?.transit.duration : "-")}
+                                                        {" Bicycle duration: " + (place.routes?.bicycle.condition === ROUTE_EXISTS ? place.routes?.bicycle.duration : "-")}
                                                     </li>
+
                                                 ))}
                                             </ul>
                                         </AccordionContent>

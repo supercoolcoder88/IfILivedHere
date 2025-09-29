@@ -46,14 +46,14 @@ export interface NearbyPlace {
     };
     primaryType: string;
     businessStatus: "OPERATIONAL" | "CLOSED_TEMPORARILY" | "CLOSED_PERMANENTLY";
-    routes: RoutesData
+    routes?: RoutesData
 }
 
 export interface RoutesData {
-    drive: RouteMatrixElement[];
-    bicycle: RouteMatrixElement[];
-    walk: RouteMatrixElement[];
-    transit: RouteMatrixElement[];
+    drive: RouteMatrixElement;
+    bicycle: RouteMatrixElement;
+    walk: RouteMatrixElement;
+    transit: RouteMatrixElement;
 }
 
 export interface PostNearbySearchResponse {

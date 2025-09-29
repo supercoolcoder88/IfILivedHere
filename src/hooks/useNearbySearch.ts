@@ -102,7 +102,6 @@ export function useNearbySearch() {
 
                 setNearbyPlaces(temp)
             }
-            // TODO: Count nearbyplaces
         } catch (error) {
             console.error("Fetching nearby places fail", error)
         }
